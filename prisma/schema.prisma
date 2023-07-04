@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  emailVerifiedAt DateTime?
+  password        String
+  token           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime?
+
+  forms     Form[]
+  responses Response[]
+
+  @@map("users")
+}
+
+model Form {
+  id               String    @id @default(uuid())
+  authorId         String
+  name             String
+  slug             String
+  description      String?
+  limitOneResponse Boolean
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime?
+
+  author         User            @relation(fields: [authorId], references: [id])
+  responses      Response[]
+  allowedDomains AllowedDomain[]
+
+  @@map("forms")
+}
+
+model Question {
+  id           String       @id @default(uuid())
+  formId       String
+  name         String
+  questionType QuestionType
+  isRequired   Boolean
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime?
+
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Response {
+  id        String    @id @default(uuid())
+  formId    String
+  authorId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+
+  form    Form     @relation(fields: [formId], references: [id])
+  author  User     @relation(fields: [authorId], references: [id])
+  answers Answer[]
+
+  @@map("responses")
+}
+
+model Answer {
+  id         String    @id @default(uuid())
+  responseId String
+  questionId String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime?
+
+  response Response @relation(fields: [responseId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@map("answers")
+}
+
+model AllowedDomain {
+  id        String    @id @default(uuid())
+  formId    String
+  domain    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+
+  form Form @relation(fields: [formId], references: [id])
+
+  @@map("allowed_domains")
+}
+
+enum QuestionType {
+  SHORT_ANSWER
+  PARAGRAPH
+  DATE
+  TIME
+  MULTIPLE_CHOICE
+  DROPDOWN
+  CHECKBOX
+}
